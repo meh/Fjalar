@@ -10,17 +10,11 @@ defmodule Fjalar do
   def handle(servers) do
     receive do
       { :new, name } ->
-        handle [{name, Fjalar.Server.new!(name: name)} | servers]
+        handle [{name, Fjalar.Server.new!(name)} | servers]
 
-      { :define, name, skill = Fjalar.Skill[] } ->
-        IO.puts "wat"
-
+      { :define, name, skill = Fjalar.Game.Skill[] } ->
         server = servers[name]
-        table  = server[:skills]
-
-        IO.puts "LOL"
-        :ets.insert(table, skill)
-        IO.puts "WUT"
+        table  = server.add_skill(skill)
 
         handle servers
 
@@ -41,10 +35,10 @@ defmodule Fjalar do
 
       Code.eval content, [__SERVER__: name], [
         file: file,
-        line: 0,
+        line: 1,
 
-        requires: [Fjalar.Game.Skill],
-        macros:   [{Fjalar.Game.Skill, [{:skill, 1}, {:skill, 2}]}]
+        requires: [Fjalar.Game.DSL, Kernel],
+        macros:   [{Fjalar.Game.DSL, [{:skill, 2}]}]
       ]
     end
   end
@@ -59,8 +53,8 @@ defmodule Fjalar do
     :fjalar <- { :get, server, Process.self }
 
     receive do
-      Fjalar.Server[name: ^server, skills: skills] ->
-        Enum.first(:ets.lookup(skills, name))
+      server = Fjalar.Server[name: ^server, skills: skills] ->
+        server.get_skill(name)
     end
   end
 end
