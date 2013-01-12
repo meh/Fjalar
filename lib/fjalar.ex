@@ -1,3 +1,20 @@
+# Copyleft (ɔ) meh. - http://meh.schizofreni.co
+#
+# This file is part of Fjalar - https://github.com/meh/Fjalar
+#
+# Fjalar is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published
+# by the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Fjalar is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with Fjalar. If not, see <http://www.gnu.org/licenses/>.
+
 defmodule Fjalar do
   def start do
     Process.register Process.spawn(Fjalar, :handle, [[]]), :fjalar
@@ -27,19 +44,33 @@ defmodule Fjalar do
     end
   end
 
+  def load_server(name, path) when is_list path do
+    Enum.each path, fn(path) ->
+      load_server(name, path)
+    end
+  end
+
   def load_server(name, path) do
     :fjalar <- { :new, name }
 
     Enum.each File.wildcard("#{path}/**/*.exs"), fn(file) ->
-      { :ok, content } = File.read file
+      case File.read(file) do
+        { :ok, content } ->
+          IO.write "Loading #{file}..."
 
-      Code.eval content, [__SERVER__: name], [
-        file: file,
-        line: 1,
+          Code.eval content, [__SERVER__: name], [
+            file: file,
+            line: 1,
 
-        requires: [Fjalar.Game.DSL, Kernel],
-        macros:   [{Fjalar.Game.DSL, [{:skill, 2}]}]
-      ]
+            requires: [Fjalar.Game.DSL, Kernel],
+            macros:   [{Fjalar.Game.DSL, [skill: 2]}]
+          ]
+
+          IO.puts " done"
+
+        { :error, reason } ->
+          IO.puts "Error while loading #{file}: #{reason}"
+      end
     end
   end
 
@@ -53,7 +84,7 @@ defmodule Fjalar do
     :fjalar <- { :get, server, Process.self }
 
     receive do
-      server = Fjalar.Server[name: ^server, skills: skills] ->
+      server = Fjalar.Server[name: ^server] ->
         server.get_skill(name)
     end
   end
