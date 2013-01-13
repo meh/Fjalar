@@ -27,7 +27,7 @@ defmodule Fjalar do
   def handle(servers) do
     receive do
       { :new, name } ->
-        handle [{name, Fjalar.Server.new!(name)} | servers]
+        handle OrdDict.put_new(servers, name, Fjalar.Server.new!(name))
 
       { :define, name, skill = Fjalar.Game.Skill[] } ->
         server = servers[name]
