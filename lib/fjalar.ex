@@ -17,7 +17,7 @@
 
 defmodule Fjalar do
   def start do
-    Process.register Process.spawn(Fjalar, :handle, [[]]), :fjalar
+    Process.register Process.spawn(Fjalar, :handle, [OrdDict.new]), :fjalar
   end
 
   def stop do
@@ -30,8 +30,7 @@ defmodule Fjalar do
         handle OrdDict.put_new(servers, name, Fjalar.Server.new!(name))
 
       { :define, name, skill = Fjalar.Game.Skill[] } ->
-        server = servers[name]
-        table  = server.add_skill(skill)
+        OrdDict.get!(servers, name).add_skill(skill)
 
         handle servers
 
