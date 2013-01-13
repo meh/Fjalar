@@ -99,7 +99,7 @@ defrecord Fjalar.Game.Skill, name: nil, id: nil,
     defmacro range(value) do
       if value == :melee do
         quote do
-          skill = skill.range(unquote(do: -1))
+          skill = skill.range(-1)
         end
       else
         quote do
@@ -111,7 +111,7 @@ defrecord Fjalar.Game.Skill, name: nil, id: nil,
     defmacro effect_range(value) do
       if value == :screen do
         quote do
-          skill = skill.effect_range(unquote(do: -1))
+          skill = skill.effect_range(-1)
         end
       else
         quote do

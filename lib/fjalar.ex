@@ -57,15 +57,15 @@ defmodule Fjalar do
         { :ok, content } ->
           IO.write "Loading #{file}..."
 
-          Code.eval content, [__SERVER__: name], [
-            file: file,
-            line: 1,
+          try do
+            Code.compile_string "import Fjalar.Game.DSL; __SERVER__ = #{inspect name, raw: true}; " <> content, file
 
-            requires: [Fjalar.Game.DSL, Kernel],
-            macros:   [{Fjalar.Game.DSL, [skill: 2]}]
-          ]
+            IO.puts " done"
+          catch kind, reason ->
+            IO.puts " error\n"
 
-          IO.puts " done"
+            :erlang.raise(kind, reason, System.stacktrace)
+          end
 
         { :error, reason } ->
           IO.puts "Error while loading #{file}: #{reason}"
