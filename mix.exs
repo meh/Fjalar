@@ -17,18 +17,41 @@ defmodule Fjalar.Mixfile do
   defp deps do
     [{ :ecsv, "1", github: "refuge/ecsv" }]
   end
+end
 
-  defmodule Helpers do
-    def csv(path, func) do
-      :ecsv.process_csv_string_with(binary_to_list(Regex.replace(%r{//.*$}gm, File.read!(path), "")),
-        function do
-          ({_, [[]]}, _) -> nil
-          ({:eof}, _)    -> nil
+defmodule Mix.Tasks.Athena do
+  def csv(path, func) do
+    :ecsv.process_csv_string_with(binary_to_list(Regex.replace(%r{//.*$}gm, File.read!(path), "")),
+      function do
+        ({_, [[]]}, _) -> nil
+        ({:eof}, _)    -> nil
 
-          ({:newline, data}, _) ->
-            func.(Enum.map(data, function(list_to_binary/1)))
+        ({:newline, data}, _) ->
+          func.(Enum.map(data, function(list_to_binary/1)))
         end)
+  end
+
+  def csv_with(path, func) do
+    csv_with(path, nil, func)
+  end
+
+  def csv_with(path, acc, func) do
+    :ecsv.process_csv_string_with(binary_to_list(Regex.replace(%r{//.*$}gm, File.read!(path), "")),
+      function do
+        ({_, [[]]}, acc) -> acc
+        ({:eof}, acc)    -> acc
+
+        ({:newline, data}, acc) ->
+          func.(Enum.map(data, function(list_to_binary/1)), acc)
+        end, acc)
+  end
+
+  def by_level(collection) do
+    {result, _} = Enum.map_reduce collection, 1, fn(element, level) ->
+      {{level, element}, level + 1}
     end
+
+    result
   end
 end
 
