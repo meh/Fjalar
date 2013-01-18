@@ -15,16 +15,18 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Fjalar. If not, see <http://www.gnu.org/licenses/>.
 
-defrecord Fjalar.Game.Skill, name: nil, id: nil,
-                             max_level: 0,
-                             range: 0,
-                             effect_range: 0,
+defrecord Fjalar.Game.Skill, name: nil, id: nil, code: nil,
+                             max: [],
+                             range: [],
+                             target: [],
                              hits: 0,
                              knockback: 0,
-                             max_placement: 0,
                              type: :none,
                              element: :neutral,
                              defense_reduction: 0,
+                             cast: [],
+                             forbidden: [],
+                             requirements: [],
                              attributes: [],
                              events: [] do
   @attributes [
@@ -36,48 +38,17 @@ defrecord Fjalar.Game.Skill, name: nil, id: nil,
     :ignore_land_protector
   ]
 
-  def melee?(self) do
-    self.range >= -1 && self.range < 5
-  end
-
-  def ranged?(self) do
-    self.range >= 5
-  end
-
-  def screen_wide?(self) do
-    self.range < 0
-  end
-
-  def single_hit?(self) do
-    !self.passive? && self.hits == 1
-  end
-
-  def repeated_hit?(self) do
-    !self.passive? && !self.single_hit?
-  end
-
-  def hits_for(level, self) do
-    if is_list self.hits do
-      Enum.find_value self.hits, fn({levels, hits}) ->
-        if List.member?(levels, level), do: hits
-      end
-    else
-      self.hits
-    end
-  end
-
-  Enum.each @attributes, fn(name) ->
-    def :"#{name}?", quote(do: [self]), [], do: (quote do
-      :ordsets.is_element(unquote(name), self.attributes)
-    end)
-  end
 
   defmodule DSL do
     def expand(name, do: block) do
+      expand(name, [], do: block)
+    end
+
+    def expand(name, values, do: block) do
       quote do
         import unquote(__MODULE__)
 
-        skill = Fjalar.Game.Skill.new(name: unquote(name))
+        skill = Fjalar.Game.Skill.new([{:name, unquote(name)} | unquote(values)])
         unquote(block)
 
         Fjalar.set_skill var!(__SERVER__), skill
@@ -90,34 +61,50 @@ defrecord Fjalar.Game.Skill, name: nil, id: nil,
       end
     end
 
-    defmacro max_level(value) do
+    defmacro code(value) do
       quote do
-        skill = skill.max_level(unquote(value))
+        skill = skill.code(unquote(value))
+      end
+    end
+
+    defmacro max(values) when is_list values do
+      quote do
+        skill = skill.max(unquote(values))
+      end
+    end
+
+    defmacro max(value) do
+      max(level: value)
+    end
+
+    defmacro range(values) when is_list values do
+      quote do
+        skill = skill.range(unquote(values))
       end
     end
 
     defmacro range(value) do
-      if value == :melee do
-        quote do
-          skill = skill.range(-1)
-        end
-      else
-        quote do
-          skill = skill.range(unquote(value))
-        end
+      range(target: value)
+    end
+
+    defmacro target(values) when is_list values do
+      quote do
+        skill = skill.target(values)
       end
     end
 
-    defmacro effect_range(value) do
-      if value == :screen do
-        quote do
-          skill = skill.effect_range(-1)
-        end
-      else
-        quote do
-          skill = skill.effect_range(unquote(value))
-        end
+    defmacro target(value) do
+      target([value])
+    end
+
+    defmacro forbidden(values) when is_list values do
+      quote do
+        skill = skill.forbidden(values)
       end
+    end
+
+    defmacro forbidden(value) do
+      forbidden([value])
     end
 
     defmacro hits(values) do
@@ -129,12 +116,6 @@ defrecord Fjalar.Game.Skill, name: nil, id: nil,
     defmacro knockback(value) do
       quote do
         skill = skill.knockback(unquote(value))
-      end
-    end
-
-    defmacro max_placement(value) do
-      quote do
-        skill = skill.max_placement(unquote(value))
       end
     end
 
@@ -154,16 +135,6 @@ defrecord Fjalar.Game.Skill, name: nil, id: nil,
       quote do
         skill = skill.defense_reduction(unquote(value))
       end
-    end
-
-    Enum.each Module.get_attribute(Fjalar.Game.Skill, :attributes), fn(name) ->
-      defmacro :"#{name}!", [], [], do: (quote do
-        quote do
-          skill = skill.update_attributes(fn(attributes) ->
-            :ordsets.add_element(unquote(name), attributes)
-          end)
-        end
-      end)
     end
 
     defmacro on(event, do: block) do

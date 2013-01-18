@@ -17,8 +17,8 @@
 
 defmodule Fjalar.Game do
   defmodule DSL do
-    defmacro skill(name, do: block) do
-      Fjalar.Game.Skill.DSL.expand(name, do: block)
+    defmacro skill(name, values, do: block) do
+      Fjalar.Game.Skill.DSL.expand(name, values, do: block)
     end
   end
 end
