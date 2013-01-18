@@ -159,7 +159,7 @@ defmodule Mix.Tasks.Athena.Skill.Cast do
         [binary_to_integer(num) | acc]
       end
     else
-      binary_to_integer(value)
+      binary_to_integer(String.strip(value))
     end
   end
 
