@@ -241,3 +241,137 @@ defmodule Mix.Tasks.Athena.Skill.Cast do
     end
   end
 end
+
+defmodule Mix.Tasks.Athena.Skill.Require do
+  use    Mix.Task
+  import Mix.Tasks.Athena
+
+  defp prepare(value) do
+    if List.member?(String.graphemes(value), ":") do
+      Enum.map String.split(value, ":"), fn(num) ->
+        binary_to_integer(String.strip(num))
+      end
+    else
+      binary_to_integer(String.strip(value))
+    end
+  end
+
+  defp required_weapons(value) do
+    types = [{0, :unarmed}, {1, :dagger}, {2, :one_handed_sword}, {3, :two_handed_sword},
+             {4, :one_handed_spear}, {5, :two_handed_spear}, {6, :one_handed_axe},
+             {7, :two_handed_axe}, {8, :mace}, {10, :stave}, {11, :bow}, {12, :knuckles},
+             {13, :musical_instrument}, {14, :whip}, {15, :book}, {16, :katar}, {17, :revolver},
+             {18, :rifle}, {19, :gatling}, {20, :shotgun}, {21, :grenade_launcher}, {22, :shuriken}]
+
+    Enum.map String.split(value, ":"), fn(num) ->
+      types[binary_to_integer(num)]
+    end
+  end
+
+  defp required_ammo(value) do
+    types = [{1, :arrow}, {2, :throwable_dagger}, {3, :bullet}, {4, :shell}, {5, :grenade},
+             {6, :shuriken}, {7, :kunai}, {8, :cannonball}, {9, :throwable_item}]
+
+    Enum.map String.split(value, ":"), fn(num) ->
+      types[binary_to_integer(num)]
+    end
+  end
+
+
+  def run([path, db]) do
+    {:ok, names} = csv_with db, [], fn(data, acc) ->
+      [{Enum.at!(data, 0), {Enum.at!(data, 16), String.strip(Enum.at!(data, 15))}} | acc]
+    end
+
+    csv path, fn(data) ->
+      if names[Enum.at!(data, 0)] do
+        IO.puts "#{elem names[Enum.at!(data, 0)], 0} > #{elem names[Enum.at!(data, 0)], 1}"
+        IO.puts "01| ID: #{Enum.at!(data, 0)}"
+
+        case prepare(Enum.at!(data, 1)) do
+          list = [_|_] ->
+            IO.puts "02| HP Cost: #{Enum.join Enum.map(by_level(list), fn({level, cost}) ->
+              "#{level}[#{cost}]"
+            end), " "}"
+
+          cost -> IO.puts "02| HP Cost: #{cost}"
+        end
+
+        IO.puts "03| Max HP Trigger: #{Enum.at!(data, 2)}"
+
+        case prepare(Enum.at!(data, 3)) do
+          list = [_|_] ->
+            IO.puts "04| SP Cost: #{Enum.join Enum.map(by_level(list), fn({level, cost}) ->
+              "#{level}[#{cost}]"
+            end), " "}"
+
+          cost -> IO.puts "04| SP Cost: #{cost}"
+        end
+
+        case prepare(Enum.at!(data, 4)) do
+          list = [_|_] ->
+            IO.puts "05| HP Rate Cost: #{Enum.join Enum.map(by_level(list), fn({level, cost}) ->
+              "#{level}[#{cost}]"
+            end), " "}"
+
+          cost -> IO.puts "05| HP Rate Cost: #{cost}"
+        end
+
+        case prepare(Enum.at!(data, 5)) do
+          list = [_|_] ->
+            IO.puts "06| SP Rate Cost: #{Enum.join Enum.map(by_level(list), fn({level, cost}) ->
+              "#{level}[#{cost}]"
+            end), " "}"
+
+          cost -> IO.puts "06| SP Rate Cost: #{cost}"
+        end
+
+        case prepare(Enum.at!(data, 6)) do
+          list = [_|_] ->
+            IO.puts "07| Zeny Cost: #{Enum.join Enum.map(by_level(list), fn({level, cost}) ->
+              "#{level}[#{cost}]"
+            end), " "}"
+
+          cost -> IO.puts "07| Zeny Cost: #{cost}"
+        end
+
+        IO.puts "08| Required Weapons: #{Enum.join required_weapons(Enum.at!(data, 7)), " "}"
+        IO.puts "09| Required Ammo Types: #{Enum.join required_ammo(Enum.at!(data, 8)), " "}"
+
+        case prepare(Enum.at!(data, 9)) do
+          list = [_|_] ->
+            IO.puts "10| Required Ammo Amount: #{Enum.join Enum.map(by_level(list), fn({level, cost}) ->
+              "#{level}[#{cost}]"
+            end), " "}"
+
+          cost -> IO.puts "10| Required Ammo Amount: #{cost}"
+        end
+
+        IO.puts "11| Required State: #{Enum.at!(data, 10)}"
+
+        case prepare(Enum.at!(data, 11)) do
+          list = [_|_] ->
+            IO.puts "12| Spirit Sphere Cost: #{Enum.join Enum.map(by_level(list), fn({level, cost}) ->
+              "#{level}[#{cost}]"
+            end), " "}"
+
+          cost -> IO.puts "12| Spirit Sphere Cost: #{cost}"
+        end
+
+        IO.puts "13| Required Item: #{Enum.at!(data, 12)} #{Enum.at!(data, 13)}"
+        IO.puts "15| Required Item: #{Enum.at!(data, 14)} #{Enum.at!(data, 15)}"
+        IO.puts "17| Required Item: #{Enum.at!(data, 16)} #{Enum.at!(data, 17)}"
+        IO.puts "19| Required Item: #{Enum.at!(data, 18)} #{Enum.at!(data, 19)}"
+        IO.puts "21| Required Item: #{Enum.at!(data, 20)} #{Enum.at!(data, 21)}"
+        IO.puts "23| Required Item: #{Enum.at!(data, 22)} #{Enum.at!(data, 23)}"
+        IO.puts "25| Required Item: #{Enum.at!(data, 24)} #{Enum.at!(data, 25)}"
+        IO.puts "27| Required Item: #{Enum.at!(data, 26)} #{Enum.at!(data, 27)}"
+        IO.puts "29| Required Item: #{Enum.at!(data, 28)} #{Enum.at!(data, 29)}"
+        IO.puts "31| Required Item: #{Enum.at!(data, 30)} #{Enum.at!(data, 31)}"
+
+
+        IO.puts ""
+      end
+    end
+  end
+end
