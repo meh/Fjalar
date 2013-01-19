@@ -77,8 +77,8 @@ defmodule Mix.Tasks.Athena.Skill do
                 {-3, :random}]
 
     if List.member?(String.graphemes(value), ":") do
-      Enum.reduce String.split(value, ":"), [], fn(num, acc) ->
-        [elements[binary_to_integer(num)] | acc]
+      Enum.map String.split(value, ":"), fn(num) ->
+        elements[binary_to_integer(num)]
       end
     else
       elements[binary_to_integer(value)]
@@ -155,8 +155,8 @@ defmodule Mix.Tasks.Athena.Skill.Cast do
 
   defp prepare(value) do
     if List.member?(String.graphemes(value), ":") do
-      Enum.reduce String.split(value, ":"), [], fn(num, acc) ->
-        [binary_to_integer(num) | acc]
+      Enum.map String.split(value, ":"), fn(num) ->
+        binary_to_integer(String.strip(num))
       end
     else
       binary_to_integer(String.strip(value))
